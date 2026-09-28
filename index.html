@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>STS Ganjil B. Indonesia Kelas 9</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        
+        .question-btn {
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 8px; font-weight: 600; font-size: 14px;
+        }
+        .answered { background-color: #10b981; color: white; border: none; }
+        .current { border: 2px solid #3b82f6; }
+        .unanswered { background-color: #e5e7eb; color: #374151; }
+
+        #cheat-overlay {
+            backdrop-filter: blur(15px);
+            background-color: rgba(0,0,0,0.8);
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased h-screen flex flex-col overflow-hidden relative">
+
+    <div id="login-screen" class="flex-1 flex items-center justify-center p-4 h-full overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 sm:p-8">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                    ID
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900">STS Ganjil 2026/2027</h1>
+                <p class="text-sm text-gray-500 mt-1">Bahasa Indonesia Kelas 9 - SMPN 38 Bandar Lampung</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                    <input type="text" id="student-name" placeholder="Masukkan nama..." class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
+                    <select id="student-class" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                        <option value="">Pilih Kelas...</option>
+                        <option value="9A">Kelas 9A</option>
+                        <option value="9B">Kelas 9B</option>
+                        <option value="9C">Kelas 9C</option>
+                        <option value="9D">Kelas 9D</option>
+                    </select>
+                </div>
+                
+                <div class="bg-yellow-50 text-yellow-800 p-4 rounded-lg text-sm border border-yellow-200 mt-4">
+                    <p class="font-bold mb-1">⚠️ Peraturan Ujian:</p>
+                    <ul class="list-disc pl-4 space-y-1">
+                        <li>Waktu ujian 90 Menit. Total 50 Soal.</li>
+                        <li>Dilarang keluar dari aplikasi/tab.</li>
+                        <li>Dilarang melakukan Screenshot.</li>
+                        <li>Pelanggaran maksimal 3x. Ke-4 otomatis disubmit.</li>
+                    </ul>
+                </div>
+
+                <button onclick="startExam()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-colors mt-6">
+                    Mulai Ujian
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="exam-screen" class="hidden flex-col h-full bg-gray-50">
+        <header class="bg-white shadow-sm px-4 py-3 flex justify-between items-center z-10">
+            <div>
+                <h2 class="font-bold text-gray-800 truncate" id="display-name">Nama Siswa</h2>
+                <p class="text-xs text-gray-500" id="display-class">Kelas</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <div id="warning-badge" class="hidden px-2 py-1 bg-red-100 text-red-600 rounded text-xs font-bold border border-red-200">
+                    Pelanggaran: <span id="warning-count">0</span>/3
+                </div>
+                <div class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg font-mono font-bold text-sm sm:text-base flex items-center gap-2">
+                    ⏱ <span id="timer">90:00</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 pb-24">
+            <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-sm p-5 sm:p-8">
+                <div class="flex justify-between items-center mb-6 border-b pb-4">
+                    <span class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Soal <span id="current-q-num">1</span> dari 50</span>
+                    <button onclick="openDaftarSoal()" class="text-blue-600 text-sm font-semibold hover:text-blue-800 flex items-center gap-1 bg-blue-50 px-3 py-1.5 rounded-md transition-colors hover:bg-blue-100">
+                        ≡ Daftar Soal
+                    </button>
+                </div>
+                
+                <div id="question-text" class="text-base sm:text-lg text-gray-800 font-medium mb-6 leading-relaxed transition-opacity duration-300">
+                </div>
+
+                <div id="options-container" class="space-y-3 transition-opacity duration-300">
+                </div>
+            </div>
+        </main>
+
+        <footer class="bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] p-4 fixed bottom-0 w-full">
+            <div class="max-w-3xl mx-auto flex justify-between items-center gap-4">
+                <button id="btn-prev" onclick="prevQuestion()" class="flex-1 py-3 px-4 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                    ← <span class="hidden sm:inline">Sebelumnya</span>
+                </button>
+                <button id="btn-next" onclick="nextQuestion()" class="flex-1 py-3 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">
+                    <span class="hidden sm:inline">Selanjutnya</span> →
+                </button>
+                <button id="btn-submit" onclick="trySubmitExam()" class="hidden flex-1 py-3 px-4 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700">
+                    Selesai Ujian
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <div id="modal-daftar-soal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-end sm:items-center">
+        <div class="bg-white w-full sm:w-[500px] rounded-t-2xl sm:rounded-2xl max-h-[80vh] flex flex-col shadow-2xl">
+            <div class="p-4 border-b flex justify-between items-center bg-gray-50 sm:rounded-t-2xl">
+                <h3 class="font-bold text-lg text-gray-800">Daftar Soal</h3>
+                <button onclick="closeDaftarSoal()" class="text-gray-500 hover:text-gray-800 p-2 text-xl font-bold">&times;</button>
+            </div>
+            <div class="p-4 overflow-y-auto grid grid-cols-5 gap-3" id="grid-soal">
+            </div>
+            <div class="p-4 border-t bg-gray-50 text-xs text-gray-500 flex justify-center gap-4 sm:rounded-b-2xl">
+                <span class="flex items-center gap-1"><div class="w-3 h-3 bg-green-500 rounded"></div> Sudah dijawab</span>
+                <span class="flex items-center gap-1"><div class="w-3 h-3 bg-gray-200 rounded"></div> Belum dijawab</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="result-screen" class="hidden flex-col h-full bg-gray-50 overflow-y-auto">
+        <div class="max-w-3xl mx-auto w-full p-4 space-y-6 pb-20">
+            <div class="bg-white rounded-2xl shadow-sm p-6 text-center mt-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Ujian Selesai</h2>
+                <p class="text-gray-500 mb-6">Terima kasih telah mengerjakan STS Bahasa Indonesia.</p>
+                
+                <div class="flex justify-center gap-4 mb-6">
+                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 w-32">
+                        <div class="text-sm text-blue-600 mb-1">Skor Akhir</div>
+                        <div class="text-4xl font-black text-blue-700" id="final-score">100</div>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-xl border border-green-100 w-24">
+                        <div class="text-sm text-green-600 mb-1">Benar</div>
+                        <div class="text-2xl font-bold text-green-700" id="final-correct">50</div>
+                    </div>
+                    <div class="bg-red-50 p-4 rounded-xl border border-red-100 w-24">
+                        <div class="text-sm text-red-600 mb-1">Salah</div>
+                        <div class="text-2xl font-bold text-red-700" id="final-wrong">0</div>
+                    </div>
+                </div>
+
+                <div id="violation-report" class="hidden text-left bg-red-50 border border-red-200 rounded-lg p-4">
+                    <h4 class="font-bold text-red-800 text-sm mb-2">⚠️ Catatan Pelanggaran:</h4>
+                    <ul id="violation-list" class="list-disc pl-5 text-sm text-red-700 space-y-1">
+                    </ul>
+                </div>
+                <div class="mt-4 text-xs text-red-500 font-bold bg-red-100 p-2 rounded">
+                    SISTEM KEAMANAN AKTIF: Dilarang melakukan screenshot halaman ini. Jika terdeteksi, Anda akan dikeluarkan.
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm p-6">
+                <h3 class="font-bold text-lg text-gray-800 mb-4 border-b pb-2">Review Jawaban & Pembahasan</h3>
+                <div id="review-container" class="space-y-6">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="cheat-overlay" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl p-6 max-w-sm w-full text-center shadow-2xl transform transition-all">
+            <div class="text-red-500 text-5xl mb-4">⚠️</div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">PERINGATAN!</h3>
+            <p id="cheat-msg" class="text-gray-600 text-sm mb-6">Anda terdeteksi keluar dari layar ujian atau mencoba screenshot.</p>
+            <button onclick="dismissCheatWarning()" class="w-full bg-red-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-700">
+                Kembali ke Ujian
+            </button>
+        </div>
+    </div>
+
+    <div id="custom-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-[60] flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl text-center">
+            <h3 id="modal-title" class="text-lg font-bold text-gray-900 mb-2">Informasi</h3>
+            <p id="modal-desc" class="text-gray-600 text-sm mb-6">Deskripsi modal.</p>
+            <div id="modal-buttons" class="flex gap-3 justify-center">
+                <button id="modal-btn-1" class="flex-1 bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            { t: "Teks yang berisi gambaran suatu objek, tempat, atau peristiwa secara jelas dan terperinci disebut...", o: ["Teks Eksposisi", "Teks Deskripsi", "Teks Prosedur", "Teks Narasi"], a: 1, e: "Teks deskripsi bertujuan menggambarkan objek secara rinci agar pembaca seolah-olah merasakannya." },
+            { t: "Ciri utama dari teks deskripsi adalah...", o: ["Menggunakan langkah-langkah", "Menggambarkan sesuatu secara rinci", "Menceritakan urutan waktu", "Berisi argumen dan opini"], a: 1, e: "Penggambaran yang terperinci dan melibatkan panca indra adalah ciri teks deskripsi." },
+            { t: "Bacalah kalimat berikut: 'Pantai itu memiliki pasir putih yang lembut dan air laut yang sangat jernih kebiruan.' Kalimat tersebut melibatkan panca indra...", o: ["Pendengaran", "Penciuman", "Penglihatan", "Perabaan dan Penglihatan"], a: 3, e: "Pasir lembut (perabaan), air laut jernih kebiruan (penglihatan)." },
+            { t: "Struktur teks deskripsi yang benar terdiri atas...", o: ["Identifikasi - Deskripsi Bagian - Simpulan", "Orientasi - Komplikasi - Resolusi", "Tujuan - Langkah-langkah - Penutup", "Pernyataan umum - Deretan penjelas - Interpretasi"], a: 0, e: "Struktur teks deskripsi adalah identifikasi, deskripsi bagian, dan simpulan/kesan." },
+            { t: "Bagian yang berisi nama objek, lokasi, sejarah lahirnya, atau makna nama pada teks deskripsi disebut...", o: ["Deskripsi bagian", "Identifikasi", "Simpulan", "Kesan umum"], a: 1, e: "Identifikasi berisi pengenalan objek secara umum." },
+            { t: "Sudut pandang orang pertama dalam teks deskripsi ditandai dengan penggunaan kata ganti...", o: ["Dia, ia", "Mereka", "Aku, saya", "Kamu, kalian"], a: 2, e: "Sudut pandang orang pertama menggunakan kata ganti aku atau saya." },
+            { t: "Penggunaan sudut pandang dalam teks deskripsi berfungsi untuk...", o: ["Menjelaskan langkah kerja", "Membawa pembaca melihat dari kacamata penulis", "Menyampaikan fakta ilmiah mutlak", "Mempengaruhi pendapat orang lain"], a: 1, e: "Sudut pandang memposisikan letak penulis dan pembaca dalam menikmati deskripsi." },
+            { t: "'Di sebelah kananku, terdapat tebing yang menjulang tinggi.' Kalimat tersebut menggunakan sudut pandang...", o: ["Orang pertama", "Orang kedua", "Orang ketiga", "Campuran"], a: 0, e: "Penggunaan 'ku' pada 'kananku' menandakan sudut pandang orang pertama." },
+            { t: "Kata hubung yang digunakan untuk menggabungkan dua klausa atau kalimat disebut...", o: ["Verba", "Adjektiva", "Konjungsi", "Pronomina"], a: 2, e: "Konjungsi adalah kata hubung." },
+            { t: "Manakah kalimat yang menggunakan konjungsi intrakalimat?", o: ["Oleh karena itu, ia pergi.", "Dia menangis karena kakinya sakit.", "Namun, pemandangan itu indah.", "Akan tetapi, hujan turun lebat."], a: 1, e: "Kata 'karena' berada di dalam satu kalimat (intrakalimat)." },
+            { t: "Konjungsi 'tetapi' berfungsi untuk menyatakan...", o: ["Penambahan", "Pemilihan", "Pertentangan", "Sebab akibat"], a: 2, e: "'Tetapi' adalah konjungsi pertentangan antar klausa." },
+            { t: "Lirik lagu sering memuat teks deskripsi. Konjungsi yang sering dipakai dalam lirik untuk menyatakan waktu adalah...", o: ["Ketika, saat", "Dan, serta", "Walaupun, meskipun", "Atau, maupun"], a: 0, e: "Ketika dan saat adalah konjungsi temporal (waktu)." },
+            { t: "'Pohon itu sangat besar. Daunnya rindang meneduhkan.' Hubungan antara dua kalimat tersebut menunjukkan...", o: ["Kohesi", "Koherensi", "Kohesi dan koherensi", "Tidak ada hubungan"], a: 2, e: "Memiliki kepaduan bentuk (kohesi melalui 'nya') dan kepaduan makna (koherensi)." },
+            { t: "Kohesi dalam teks deskripsi berhubungan dengan...", o: ["Kepaduan makna antar kalimat", "Keterkaitan bentuk (gramatikal) antar kalimat", "Jumlah paragraf", "Gaya bahasa kiasan"], a: 1, e: "Kohesi menitikberatkan pada aspek gramatikal dan bentuk, seperti penggunaan rujukan kata." },
+            { t: "Koherensi dalam teks berarti...", o: ["Teks yang ditulis sangat panjang", "Teks memiliki ejaan yang sempurna", "Kalimat-kalimatnya memiliki kepaduan makna yang logis", "Banyak menggunakan kata sifat"], a: 2, e: "Koherensi adalah kepaduan makna yang membuat teks masuk akal." },
+            { t: "Penggunaan kata ganti 'ini', 'itu', 'tersebut' merupakan penanda...", o: ["Kohesi", "Koherensi", "Majas", "Antonim"], a: 0, e: "Kata tunjuk merupakan salah satu bentuk kohesi (rujukan)." },
+            { t: "'Bunga mawar merah itu mekar dengan indah. Sayangnya, harumnya tidak terlalu tercium.' Kata 'sayangnya' berfungsi untuk...", o: ["Membuat kalimat lebih panjang", "Menjaga koherensi antar kalimat (pertentangan)", "Menggantikan subjek", "Mendeskripsikan bunga mawar"], a: 1, e: "Berfungsi sebagai jembatan makna yang menyatakan pertentangan halus antar kondisi." },
+            { t: "Tujuan utama membaca teks deskripsi adalah...", o: ["Mengetahui cara membuat sesuatu", "Mendapatkan informasi seolah melihat langsung", "Terhibur oleh alur cerita", "Menyetujui pendapat penulis"], a: 1, e: "Teks deskripsi membuat pembaca merasakan atau melihat langsung apa yang digambarkan." },
+            { t: "Berikut yang bukan merupakan ciri teks deskripsi adalah...", o: ["Menggunakan kata-kata khusus", "Menggunakan kalimat rincian", "Menggunakan kata sinonim dengan emosi kuat", "Menggunakan kata perintah (imperatif)"], a: 3, e: "Kata perintah (imperatif) adalah ciri teks prosedur, bukan deskripsi." },
+            { t: "Gaya bahasa (majas) yang sering digunakan dalam teks deskripsi untuk menyamakan dua hal yang berbeda adalah...", o: ["Personifikasi", "Metafora", "Hiperbola", "Litotes"], a: 1, e: "Metafora sering dipakai untuk membandingkan secara langsung untuk mendeskripsikan." },
+            { t: "Teks deskripsi tentang ruang kelas sebaiknya dimulai dengan...", o: ["Menjelaskan letak meja dan kursi secara detail", "Menyebutkan nama sekolah dan lokasi kelas secara umum", "Menyimpulkan bahwa kelas itu sangat nyaman", "Menceritakan kegiatan belajar mengajar"], a: 1, e: "Dimulai dengan Identifikasi umum terlebih dahulu." },
+            { t: "Dalam teks deskripsi lirik lagu 'Nyiur Hijau', yang dideskripsikan adalah...", o: ["Pegunungan yang gersang", "Keindahan alam pantai Indonesia", "Ramainya perkotaan", "Kehidupan bawah laut"], a: 1, e: "Nyiur melambai (pohon kelapa) identik dengan deskripsi pantai Indonesia." },
+            { t: "Cermati kalimat: 'Ayah memiliki tubuh yang *tegap*'. Antonim dari kata yang dicetak miring adalah...", o: ["Kekar", "Bungkuk", "Kuat", "Tinggi"], a: 1, e: "Tegap berarti lurus/gagah, kebalikannya adalah bungkuk." },
+            { t: "Memahami sudut pandang membantu kita mengetahui...", o: ["Akhir cerita", "Posisi penulis terhadap objek yang dideskripsikan", "Jumlah kata dalam teks", "Tahun pembuatan teks"], a: 1, e: "Sudut pandang menunjukkan posisi atau perspektif penulis." },
+            { t: "Kalimat deskripsi yang menggunakan indra penciuman adalah...", o: ["Aroma kopi yang baru diseduh menyebar ke seluruh ruangan.", "Angin malam terasa sangat dingin menusuk tulang.", "Suara gemericik air sungai menenangkan pikiran.", "Baju itu berwarna merah menyala."], a: 0, e: "Kata 'aroma' berkaitan dengan indra penciuman." },
+            { t: "Teks yang berisi cara, tujuan untuk membuat atau melakukan sesuatu dengan langkah-langkah yang tepat disebut...", o: ["Teks Eksposisi", "Teks Observasi", "Teks Narasi", "Teks Prosedur"], a: 3, e: "Teks prosedur bertujuan memandu langkah demi langkah." },
+            { t: "Struktur teks prosedur secara umum terdiri dari...", o: ["Tujuan, Bahan/Alat, Langkah-langkah, Penutup", "Identifikasi, Deskripsi Bagian", "Orientasi, Resolusi", "Tesis, Argumentasi, Penegasan"], a: 0, e: "Struktur prosedur: Tujuan, Material (Bahan/Alat), Langkah, Penutup." },
+            { t: "Mengubah petikan cerpen menjadi teks prosedur berarti...", o: ["Menghapus nama tokoh dalam cerita", "Menyimpulkan isi cerita", "Menyusun tindakan tokoh dalam cerita menjadi urutan langkah-langkah logis", "Mengganti alur maju menjadi alur mundur"], a: 2, e: "Tindakan/cara yang diceritakan diubah menjadi format langkah instruksional." },
+            { t: "Ciri kebahasaan teks prosedur yang paling menonjol adalah...", o: ["Banyak menggunakan kalimat pasif", "Menggunakan kalimat perintah (imperatif)", "Memakai kata kiasan (majas)", "Ditulis dengan sudut pandang orang pertama"], a: 1, e: "Kalimat perintah digunakan untuk memandu pembaca melakukan tindakan." },
+            { t: "Kata serapan adalah...", o: ["Kata yang berasal dari bahasa gaul", "Kata yang menyerap air", "Kata dari bahasa daerah/asing yang diintegrasikan ke dalam bahasa Indonesia", "Kata yang tidak memiliki arti asli"], a: 2, e: "Kosakata serapan disesuaikan ejaan dan pengucapannya dalam bahasa Indonesia." },
+            { t: "Contoh kata serapan dari bahasa Inggris yang sudah baku dalam bahasa Indonesia adalah...", o: ["Aplication", "Aplikasi", "Aplikation", "Aplikas"], a: 1, e: "Application diserap menjadi Aplikasi." },
+            { t: "Proses penyerapan kosakata asing dilakukan untuk...", o: ["Merusak bahasa Indonesia", "Memperkaya kosakata bahasa Indonesia, terutama di bidang teknologi/ilmu pengetahuan", "Membuat bahasa Indonesia sulit dipelajari", "Menghilangkan bahasa daerah"], a: 1, e: "Menambah perbendaharaan kata baru." },
+            { t: "Kalimat manakah yang merupakan kalimat imperatif?", o: ["Ibu sedang memasak nasi.", "Siapkan panci dan air bersih!", "Apakah kamu sudah makan?", "Air mendidih pada suhu 100 derajat."], a: 1, e: "Kalimat B berisi perintah (Siapkan!)." },
+            { t: "Infografik tentang teks prosedur berfungsi untuk...", o: ["Menghias dinding", "Menyampaikan langkah-langkah secara visual agar lebih menarik dan mudah dipahami", "Mengganti teks bacaan sepenuhnya", "Menulis cerita pendek"], a: 1, e: "Infografik mengandalkan visual untuk mempermudah pemahaman prosedur." },
+            { t: "Saat mencermati infografik teks prosedur, hal pertama yang harus diperhatikan adalah...", o: ["Judul infografik", "Warna latar belakang", "Nama pembuatnya", "Jumlah gambarnya"], a: 0, e: "Judul menunjukkan tujuan dari prosedur tersebut." },
+            { t: "Membaca nyaring teks bertema buku bertujuan untuk...", o: ["Menghafalkan isi buku", "Melatih intonasi, pelafalan, dan pemahaman isi teks prosedur agar jelas didengar orang lain", "Mendapatkan nilai seni suara", "Membuat buku menjadi rusak"], a: 1, e: "Membaca nyaring fokus pada vokal, intonasi, dan kejelasan pesan." },
+            { t: "Poster prosedur yang baik harus memiliki ciri...", o: ["Teks yang sangat panjang tanpa gambar", "Gambar dominan dengan instruksi yang singkat, padat, dan jelas", "Tidak memiliki judul", "Menggunakan bahasa yang sulit dimengerti"], a: 1, e: "Poster memadukan gambar dan teks instruksi yang ringkas." },
+            { t: "Konjungsi yang sering dipakai dalam teks prosedur untuk menunjukkan urutan adalah...", o: ["Dan, atau", "Tetapi, namun", "Selanjutnya, kemudian, lalu", "Karena, sebab"], a: 2, e: "Konjungsi urutan (temporal) memandu langkah-langkah." },
+            { t: "Kalimat pembatasan pada teks prosedur bertujuan agar...", o: ["Pembaca tidak bosan", "Tindakan dilakukan secara akurat, tidak lebih dan tidak kurang", "Langkah menjadi lebih panjang", "Teks terlihat lebih ilmiah"], a: 1, e: "Misalnya: 'goreng hingga kecoklatan' membatasi kapan harus diangkat." },
+            { t: "Manakah contoh kalimat dengan batasan yang jelas?", o: ["Tambahkan garam secukupnya.", "Goreng ikan sampai matang.", "Rebus air selama tepat 15 menit.", "Campur tepung dengan air."], a: 2, e: "15 menit adalah batasan waktu yang sangat spesifik dan akurat." },
+            { t: "Akhiran -kan pada kata 'tambahkan' dan 'masukkan' membentuk kata...", o: ["Sifat", "Benda", "Kerja perintah (imperatif)", "Keterangan"], a: 2, e: "Akhiran -kan/-i sering membentuk verba imperatif." },
+            { t: "Informasi utama dalam teks prosedur cara membuat akun email adalah...", o: ["Sejarah internet", "Langkah-langkah mendaftar dari awal hingga akun siap digunakan", "Harga komputer saat ini", "Macam-macam alamat email"], a: 1, e: "Fokus pada langkah penyelesaian tujuan." },
+            { t: "Kosakata serapan 'komputer' berasal dari bahasa...", o: ["Belanda", "Inggris (Computer)", "Spanyol", "Arab"], a: 1, e: "Diserap dari bahasa Inggris 'Computer'." },
+            { t: "Dalam mengubah cerpen menjadi prosedur, hal yang *tidak perlu* diubah adalah...", o: ["Nama tokoh", "Gaya penceritaan", "Langkah kerja inti (substansi kegiatan)", "Dialog antartokoh"], a: 2, e: "Substansi kegiatan adalah inti prosedur yang harus dipertahankan." },
+            { t: "Untuk mempraktikkan prosedur pembuatan poster, langkah pertama biasanya adalah...", o: ["Mewarnai", "Menentukan topik/tujuan poster", "Menempel di dinding", "Mencetak poster"], a: 1, e: "Sebelum mendesain, topik harus ditentukan." },
+            { t: "Syarat bahasa dalam poster teks prosedur adalah...", o: ["Bertele-tele", "Mengandung unsur SARA", "Persuasif dan informatif", "Menggunakan bahasa kuno"], a: 2, e: "Harus informatif (jelas instruksinya) dan menarik (persuasif)." },
+            { t: "Apa fungsi bagian 'penutup' dalam teks prosedur?", o: ["Mengulang langkah pertama", "Menyebutkan alat tambahan", "Memberikan ucapan selamat mencoba atau simpulan hasil", "Menambahkan resep baru"], a: 2, e: "Penutup biasanya berisi motivasi atau penegasan hasil akhir." },
+            { t: "Penggunaan angka 1, 2, 3 pada teks prosedur menunjukkan...", o: ["Jumlah bahan", "Urutan langkah-langkah yang harus diikuti (sistematis)", "Halaman buku", "Nilai kepentingan langkah"], a: 1, e: "Menunjukkan urutan yang sistematis (tidak boleh ditukar)." },
+            { t: "Jika langkah-langkah dalam teks prosedur membuat makanan ditukar urutannya, kemungkinan besar...", o: ["Makanan menjadi lebih enak", "Teks menjadi teks deskripsi", "Proses gagal dan hasil tidak sesuai harapan", "Tidak terjadi apa-apa"], a: 2, e: "Prosedur harus sistematis, mengubah urutan bisa menyebabkan kegagalan." },
+            { t: "Perbedaan utama teks prosedur dan teks deskripsi adalah...", o: ["Teks prosedur panjang, deskripsi pendek", "Prosedur berisi urutan melakukan sesuatu, deskripsi berisi penggambaran objek", "Prosedur berupa fiksi, deskripsi berupa fakta", "Tidak ada perbedaan"], a: 1, e: "Prosedur fokus pada cara/tindakan, deskripsi fokus pada gambaran objek." }
+        ];
+
+        let gameState = 'login'; 
+        let studentData = { name: '', class: '', score: 0, correct: 0, wrong: 0, violations: 0, violationLog: [] };
+        let currentQuestion = 0;
+        let answers = new Array(50).fill(null);
+        let timeLeft = 90 * 60; 
+        let timerInterval;
+        let MAX_VIOLATIONS = 3;
+        let examSubmitted = false;
+
+        function showModal(title, desc, buttons) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-desc').innerHTML = desc; 
+            
+            const btnContainer = document.getElementById('modal-buttons');
+            btnContainer.innerHTML = '';
+            
+            buttons.forEach(btn => {
+                const b = document.createElement('button');
+                b.className = `flex-1 font-bold py-2 px-4 rounded-lg transition-colors ${btn.class}`;
+                b.innerText = btn.text;
+                b.onclick = () => {
+                    document.getElementById('custom-modal').classList.add('hidden');
+                    if(btn.action) btn.action();
+                };
+                btnContainer.appendChild(b);
+            });
+            
+            document.getElementById('custom-modal').classList.remove('hidden');
+        }
+
+        function startExam() {
+            const nameInput = document.getElementById('student-name').value.trim();
+            const classInput = document.getElementById('student-class').value;
+            
+            if(!nameInput || !classInput) {
+                showModal('Peringatan', 'Harap isi Nama dan Kelas terlebih dahulu!', [
+                    { text: 'Oke', class: 'bg-blue-600 hover:bg-blue-700 text-white' }
+                ]);
+                return;
+            }
+
+            studentData.name = nameInput;
+            studentData.class = classInput;
+            
+            document.getElementById('display-name').innerText = nameInput;
+            document.getElementById('display-class').innerText = `Kelas ${classInput}`;
+            
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('exam-screen').classList.remove('hidden');
+            document.getElementById('exam-screen').classList.add('flex');
+            
+            gameState = 'exam';
+            setupSecurityListeners();
+            startTimer();
+            renderQuestion();
+            requestFullScreen();
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                if(timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    submitExam(true); 
+                    return;
+                }
+                timeLeft--;
+                const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                const s = (timeLeft % 60).toString().padStart(2, '0');
+                document.getElementById('timer').innerText = `${m}:${s}`;
+                
+                if(timeLeft < 300) { 
+                    document.getElementById('timer').parentElement.classList.replace('bg-blue-100', 'bg-red-100');
+                    document.getElementById('timer').parentElement.classList.replace('text-blue-700', 'text-red-700');
+                }
+            }, 1000);
+        }
+
+        function renderQuestion() {
+            const q = questions[currentQuestion];
+            const qText = document.getElementById('question-text');
+            const optsContainer = document.getElementById('options-container');
+
+            // Animasi fade out sederhana
+            qText.style.opacity = '0';
+            optsContainer.style.opacity = '0';
+
+            setTimeout(() => {
+                document.getElementById('current-q-num').innerText = currentQuestion + 1;
+                qText.innerText = q.t;
+                optsContainer.innerHTML = '';
+                
+                const labels = ['A', 'B', 'C', 'D'];
+                
+                q.o.forEach((optText, index) => {
+                    const isSelected = answers[currentQuestion] === index;
+                    const div = document.createElement('div');
+                    
+                    div.className = `p-4 border rounded-xl cursor-pointer transition-all flex gap-3 hover:-translate-y-0.5 ${isSelected ? 'bg-blue-50 border-blue-500 shadow-md ring-1 ring-blue-500' : 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-sm'}`;
+                    div.onclick = () => selectOption(index);
+                    
+                    div.innerHTML = `
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-colors shadow-sm ${isSelected ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 border border-gray-300'}">
+                            ${labels[index]}
+                        </div>
+                        <div class="pt-1 text-gray-800 text-sm sm:text-base leading-snug">
+                            ${optText}
+                        </div>
+                    `;
+                    optsContainer.appendChild(div);
+                });
+
+                document.getElementById('btn-prev').disabled = currentQuestion === 0;
+                
+                if(currentQuestion === questions.length - 1) {
+                    document.getElementById('btn-next').classList.add('hidden');
+                    document.getElementById('btn-submit').classList.remove('hidden');
+                } else {
+                    document.getElementById('btn-next').classList.remove('hidden');
+                    document.getElementById('btn-submit').classList.add('hidden');
+                }
+
+                // Animasi fade in
+                qText.style.opacity = '1';
+                optsContainer.style.opacity = '1';
+            }, 150); // Waktu yang sinkron dengan CSS duration
+        }
+
+        function selectOption(index) {
+            answers[currentQuestion] = index;
+            renderQuestion();
+        }
+
+        function nextQuestion() {
+            if(currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                renderQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if(currentQuestion > 0) {
+                currentQuestion--;
+                renderQuestion();
+            }
+        }
+
+        function openDaftarSoal() {
+            const grid = document.getElementById('grid-soal');
+            grid.innerHTML = '';
+            for(let i = 0; i < questions.length; i++) {
+                const btn = document.createElement('button');
+                btn.innerText = i + 1;
+                let classes = 'question-btn transition-transform hover:scale-105 ';
+                
+                if(answers[i] !== null) classes += 'answered shadow-sm ';
+                else classes += 'unanswered shadow-sm ';
+                
+                if(i === currentQuestion) classes += 'current ring-2 ring-blue-300 ring-offset-1 ';
+                
+                btn.className = classes;
+                btn.onclick = () => {
+                    currentQuestion = i;
+                    renderQuestion();
+                    closeDaftarSoal();
+                };
+                grid.appendChild(btn);
+            }
+            document.getElementById('modal-daftar-soal').classList.remove('hidden');
+        }
+
+        function closeDaftarSoal() {
+            document.getElementById('modal-daftar-soal').classList.add('hidden');
+        }
+
+        function trySubmitExam() {
+            const unanswered = answers.filter(a => a === null).length;
+            
+            if(unanswered > 0) {
+                showModal('Peringatan', `Masih ada <b>${unanswered}</b> soal yang belum dikerjakan. Yakin ingin mengumpulkan?`, [
+                    { text: 'Batal', class: 'bg-gray-200 hover:bg-gray-300 text-gray-800' },
+                    { text: 'Kumpulkan', class: 'bg-green-600 hover:bg-green-700 text-white', action: () => submitExam(false) }
+                ]);
+            } else {
+                showModal('Konfirmasi', 'Apakah Anda yakin ingin mengakhiri ujian dan menyimpan jawaban?', [
+                    { text: 'Batal', class: 'bg-gray-200 hover:bg-gray-300 text-gray-800' },
+                    { text: 'Ya, Selesai', class: 'bg-blue-600 hover:bg-blue-700 text-white', action: () => submitExam(false) }
+                ]);
+            }
+        }
+
+        function submitExam(isAuto = false) {
+            if(examSubmitted) return;
+            examSubmitted = true;
+            clearInterval(timerInterval);
+            
+            studentData.correct = 0;
+            studentData.wrong = 0;
+            
+            answers.forEach((ans, i) => {
+                if(ans === questions[i].a) studentData.correct++;
+                else studentData.wrong++;
+            });
+            
+            studentData.score = studentData.correct * 2; 
+            
+            sendDataToSheets(studentData);
+
+            gameState = 'result';
+            showResultScreen(isAuto);
+            
+            if(document.fullscreenElement) {
+                document.exitFullscreen().catch(()=>{});
+            }
+        }
+
+        function showResultScreen(isAuto) {
+            document.getElementById('exam-screen').classList.replace('flex', 'hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            document.getElementById('result-screen').classList.add('flex');
+            
+            // Animasi angka (opsional tapi bagus)
+            animateValue('final-score', 0, studentData.score, 1000);
+            document.getElementById('final-correct').innerText = studentData.correct;
+            document.getElementById('final-wrong').innerText = studentData.wrong;
+
+            if(isAuto) {
+                showModal('Waktu Habis!', 'Ujian otomatis dikumpulkan karena waktu atau batas pelanggaran telah dicapai.', [{text: 'Lihat Hasil', class:'bg-blue-600 hover:bg-blue-700 text-white'}]);
+            }
+
+            if(studentData.violations > 0) {
+                const report = document.getElementById('violation-report');
+                const list = document.getElementById('violation-list');
+                report.classList.remove('hidden');
+                studentData.violationLog.forEach(log => {
+                    const li = document.createElement('li');
+                    li.innerText = log;
+                    list.appendChild(li);
+                });
+            }
+
+            const reviewContainer = document.getElementById('review-container');
+            questions.forEach((q, i) => {
+                const userAns = answers[i];
+                const isCorrect = userAns === q.a;
+                
+                const div = document.createElement('div');
+                div.className = `p-4 rounded-xl border shadow-sm ${isCorrect ? 'border-green-300 bg-green-50/50' : 'border-red-300 bg-red-50/50'}`;
+                
+                const labels = ['A', 'B', 'C', 'D'];
+                const userAnswerTxt = userAns !== null ? labels[userAns] + ". " + q.o[userAns] : 'Tidak dijawab';
+                const correctAnswerTxt = labels[q.a] + ". " + q.o[q.a];
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="font-bold text-gray-700">Soal ${i+1}</span>
+                        <span class="${isCorrect ? 'text-green-700 bg-green-100 border-green-200' : 'text-red-700 bg-red-100 border-red-200'} font-bold text-xs uppercase px-2 py-1 rounded-md border shadow-sm flex items-center gap-1">
+                            ${isCorrect ? '✔ Benar' : '✖ Salah'}
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-800 mb-4 font-medium">${q.t}</p>
+                    <div class="text-sm space-y-2 mb-4 bg-white p-3 rounded-lg border border-gray-100">
+                        <div class="flex flex-col sm:flex-row gap-1 sm:gap-2">
+                            <span class="w-full sm:w-24 text-gray-500 text-xs sm:text-sm uppercase tracking-wide font-semibold">Jawabanmu</span>
+                            <span class="${isCorrect?'text-green-700 font-bold':'text-red-600 font-bold'}">${userAnswerTxt}</span>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-1 sm:gap-2 pt-2 border-t border-gray-50">
+                            <span class="w-full sm:w-24 text-gray-500 text-xs sm:text-sm uppercase tracking-wide font-semibold">Kunci</span>
+                            <span class="text-blue-700 font-bold">${correctAnswerTxt}</span>
+                        </div>
+                    </div>
+                    <div class="bg-yellow-50/80 text-yellow-900 p-3 rounded-lg text-sm border border-yellow-200 shadow-inner">
+                        <strong class="text-yellow-700 uppercase text-xs tracking-wider mb-1 block">Pembahasan</strong> 
+                        ${q.e}
+                    </div>
+                `;
+                reviewContainer.appendChild(div);
+            });
+        }
+
+        // Helper function animasi angka
+        function animateValue(id, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                document.getElementById(id).innerHTML = Math.floor(progress * (end - start) + start);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        let blurTimeout;
+        function setupSecurityListeners() {
+            document.addEventListener('visibilitychange', () => {
+                if(document.visibilityState === 'hidden' && gameState === 'exam') {
+                    triggerCheat('Berpindah tab, minimize browser, atau membuka aplikasi lain');
+                }
+            });
+
+            // Delay pendek pada blur untuk mencegah false positive (misal notifikasi sistem)
+            window.addEventListener('blur', () => {
+                if(gameState === 'exam') {
+                    blurTimeout = setTimeout(() => {
+                        triggerCheat('Layar kehilangan fokus (indikasi buka app lain/tangkapan layar)');
+                        document.getElementById('cheat-overlay').classList.remove('hidden');
+                    }, 500); // toleransi 0.5 detik
+                }
+            });
+            
+            window.addEventListener('focus', () => {
+                clearTimeout(blurTimeout);
+            });
+
+            document.addEventListener('contextmenu', e => e.preventDefault());
+
+            document.addEventListener('keyup', (e) => {
+                if (e.key === 'PrintScreen') {
+                    triggerCheat('Menekan tombol Screenshot');
+                    navigator.clipboard.writeText(''); 
+                }
+            });
+            
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'F12' || 
+                   (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+                   (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+                   (e.ctrlKey && e.key === 'U') || // View Source
+                   (e.ctrlKey && e.key === 'c') || // Copy
+                   (e.ctrlKey && e.key === 'v')    // Paste
+                ) {
+                    e.preventDefault();
+                    triggerCheat('Mencoba melakukan tindakan terlarang (Inspeksi/Copy)');
+                }
+            });
+        }
+
+        function triggerCheat(reason) {
+            if (gameState === 'exam') {
+                studentData.violations++;
+                const time = new Date().toLocaleTimeString();
+                studentData.violationLog.push(`[${time}] ${reason}`);
+                
+                const badge = document.getElementById('warning-badge');
+                badge.classList.remove('hidden');
+                document.getElementById('warning-count').innerText = studentData.violations;
+
+                document.getElementById('cheat-msg').innerText = `PELANGGARAN (${studentData.violations}/${MAX_VIOLATIONS}):\n${reason}`;
+                
+                if (studentData.violations >= MAX_VIOLATIONS + 1) {
+                    document.getElementById('cheat-overlay').classList.add('hidden');
+                    
+                    showModal('Diskualifikasi', 'Batas pelanggaran terlampaui. Ujian otomatis dikumpulkan.', [
+                        { text: 'Oke', class: 'bg-red-600 hover:bg-red-700 text-white', action: () => submitExam(true) }
+                    ]);
+                }
+            } 
+            else if (gameState === 'result') {
+                // Hukuman jika curang di halaman hasil
+                document.body.innerHTML = "<div style='height:100vh;display:flex;align-items:center;justify-content:center;background:white;color:red;font-size:24px;font-weight:bold;text-align:center;padding:20px;line-height:1.5;'>SISTEM MENDETEKSI TINDAKAN ILEGAL.<br>KEAMANAN HASIL UJIAN TERPICU.<br>HALAMAN DITUTUP.</div>";
+                setTimeout(() => {
+                    window.location.reload(); 
+                }, 3000);
+            }
+        }
+
+        function dismissCheatWarning() {
+            if(studentData.violations <= MAX_VIOLATIONS) {
+                document.getElementById('cheat-overlay').classList.add('hidden');
+                requestFullScreen(); // Coba paksa fullscreen lagi saat dismiss
+            }
+        }
+
+        function requestFullScreen() {
+            try {
+                let elem = document.documentElement;
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen().catch(err => console.log("Layar penuh ditolak browser (biasanya butuh interaksi pengguna)."));
+                } else if (elem.webkitRequestFullscreen) { 
+                    elem.webkitRequestFullscreen().catch(err=>{});
+                } else if (elem.msRequestFullscreen) { 
+                    elem.msRequestFullscreen().catch(err=>{});
+                }
+            } catch (error) {
+                console.log("Mode layar penuh tidak didukung.");
+            }
+        }
+
+        function sendDataToSheets(data) {
+            // URL GOOGLE APPS SCRIPT ANDA DI SINI
+            const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzRoQc1fmBCTqmx4spETZcrVkqj3R1cX7SsYZzW7oPQmlqmxDTAtWNviRdSzH7KofB7/exec'; 
+            
+            const payload = {
+                nama: data.name,
+                kelas: data.class,
+                benar: data.correct,
+                salah: data.wrong,
+                nilai: data.score,
+                jumlahPelanggaran: data.violations,
+                detailPelanggaran: data.violationLog.join(" | ") || "Tidak ada"
+            };
+
+            // MENGGUNAKAN MODE 'no-cors' UNTUK MENGHINDARI BLOKIR DI GITHUB PAGES
+            // Catatan: Pada mode no-cors, kita tidak bisa membaca response sukses/gagal dari server,
+            // tetapi request POST tetap terkirim ke Google Script dengan aman.
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors', // PENTING UNTUK HOSTING STATIS (GITHUB PAGES)
+                headers: { 
+                    'Content-Type': 'text/plain;charset=utf-8' // Tetap text/plain
+                },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                // Di mode no-cors, response selalu success, tidak peduli apakah data masuk.
+                // Namun, request dijamin terkirim dari sisi client.
+                console.log('Permintaan pengiriman data terpicu (Status: Opaque - No CORS)');
+            }).catch(error => {
+                console.error('Koneksi terputus, gagal mengirim data:', error);
+                alert("Peringatan: Gagal terhubung ke server. Harap lapor ke pengawas (Kode: " + data.score + ")");
+            });
+            
+            console.log("Data diproses untuk pengiriman:", payload);
+        }
+    </script>
+</body>
+</html>
